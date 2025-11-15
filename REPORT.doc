@@ -239,7 +239,6 @@ Hình ảnh được lưu trong Object Storage (có thể dùng Firebase Storage
 
 TÀI LIỆU THAM KHẢO
 
-(Phần tài liệu tham khảo sẽ liệt kê các paper, repo, docs; không tính vào 20 trang nội dung)
 
 - Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.
 - Unitary/toxic-bert — Hugging Face model card.
@@ -250,16 +249,5 @@ TÀI LIỆU THAM KHẢO
 
 PHỤ LỤC
 
-- A. Sơ đồ tuần tự (Mermaid code)
-- B. Sơ đồ lớp (Mermaid code)
-- C. Sơ đồ thành phần (Mermaid code)
-- D. Các file cấu hình chính và snipppet mã nguồn
 
-
----
-
-Ghi chú: Đây là tệp văn bản dạng plain text (.doc) chứa nội dung báo cáo. Để có định dạng tốt trong Word, bạn có thể mở tệp này bằng Microsoft Word và lưu lại ở định dạng `.docx` hoặc `.doc`. Nếu bạn muốn, tôi có thể:
-- Chuyển nội dung sang `.docx` với định dạng heading, mục lục tự động và styles.
-- Thêm bản mục lục chi tiết với tham chiếu số trang (cần convert sang docx/ Word để cập nhật số trang tự động).
-- Thêm nội dung số liệu thử nghiệm cụ thể, biểu đồ và ảnh chụp màn hình từ repo.
 
