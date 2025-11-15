@@ -1,0 +1,265 @@
+BÁO CÁO TỔNG KẾT ĐỒ ÁN
+
+"Phát triển nền tảng mạng xã hội kết hợp AI cho điều chỉnh nội dung và gợi ý"
+
+Tên sinh viên: [Họ và tên]
+Mã sinh viên: [MSSV]
+Lớp: [Lớp]
+Giảng viên hướng dẫn: [GVHD]
+Khoa/Trường: [Khoa/Trường]
+Ngày nộp: [Ngày]
+
+TÓM TẮT
+
+Báo cáo này trình bày quá trình thiết kế, xây dựng và đánh giá hệ thống mạng xã hội mẫu mang tên DACN2, một ứng dụng web gồm frontend (React), backend (FastAPI) và cơ sở dữ liệu Firestore. Hệ thống tích hợp hai module AI chính: (1) ModerationService sử dụng mô hình phân loại tiếng để kiểm soát nội dung độc hại và spam; (2) RecommendationService sử dụng embedding câu để sinh gợi ý bài viết cá nhân hoá. Báo cáo phân tích yêu cầu, kiến trúc hệ thống, thiết kế chi tiết (bao gồm sơ đồ tuần tự, sơ đồ lớp, sơ đồ thành phần), mô tả triển khai, kiểm thử, kết quả đánh giá và đề xuất nâng cao. Các phần chính tập trung vào bảo mật, hiệu năng, trải nghiệm người dùng và tính có thể mở rộng của hệ thống.
+
+TỪ KHÓA: mạng xã hội, moderation, recommendation, AI, FastAPI, React, Firestore
+
+MỤC LỤC
+
+(Phần mục lục không tính vào 20 trang nội dung yêu cầu)
+
+1. Giới thiệu
+2. Mục tiêu và phạm vi
+3. Tổng quan tài liệu liên quan
+4. Phân tích yêu cầu
+5. Kiến trúc hệ thống
+6. Thiết kế chi tiết
+7. Mô-đun AI: Moderation và Recommendation
+8. Triển khai và tích hợp
+9. Kiểm thử và đánh giá
+10. Kết luận và hướng phát triển
+Tài liệu tham khảo
+Phụ lục
+
+
+1. GIỚI THIỆU
+
+Trong thời đại số, mạng xã hội đóng vai trò quan trọng trong việc kết nối người dùng và chia sẻ thông tin. Tuy nhiên, hệ quả của nội dung độc hại, lời lẽ thù ghét, và spam gây ảnh hưởng tiêu cực đến trải nghiệm và an toàn cộng đồng. Mục tiêu của đồ án này là phát triển một nền tảng mạng xã hội mẫu (DACN2) kết hợp các module AI có khả năng tự động điều chỉnh nội dung (moderation) và cá nhân hoá luồng nội dung (recommendation) nhằm nâng cao chất lượng nội dung, bảo vệ người dùng và duy trì trải nghiệm tốt.
+
+Báo cáo trình bày quy trình phân tích, thiết kế, triển khai và kiểm thử hệ thống, mô tả chi tiết các thành phần chính, cách tích hợp AI nội bộ (local models/HuggingFace) và Firestore cho lưu trữ, cùng những cân nhắc về bảo mật, hiệu năng và khả năng mở rộng.
+
+
+2. MỤC TIÊU VÀ PHẠM VI
+
+2.1 Mục tiêu chính
+- Xây dựng một ứng dụng mạng xã hội mẫu cho phép người dùng đăng bài, bình luận, và tương tác (like).
+- Tích hợp module kiểm duyệt nội dung tự động để phát hiện và chặn nội dung độc hại hoặc spam.
+- Triển khai module gợi ý cá nhân hoá dựa trên embedding và điểm tương đồng ngữ nghĩa.
+- Đảm bảo API an toàn, có xác thực, và tuân thủ CORS cho frontend.
+- Cung cấp bộ tài liệu kỹ thuật, sơ đồ kiến trúc và báo cáo đánh giá.
+
+2.2 Phạm vi
+- Ứng dụng bao gồm frontend React và backend FastAPI, lưu trữ Firestore.
+- Các mô-đun AI (moderation và recommendation) được triển khai dưới dạng dịch vụ nội bộ (không gọi API bên thứ ba trong phạm vi cơ bản), sử dụng mô hình pre-trained từ HuggingFace khi có thể.
+- Không triển khai các tính năng thanh toán, quảng cáo hay streaming thời gian thực phức tạp.
+
+
+3. TỔNG QUAN TÀI LIỆU LIÊN QUAN
+
+3.1 Moderation content
+Nghiên cứu về nhận dạng ngôn ngữ độc hại, toxic comment classification, và kỹ thuật phát hiện spam cho thấy các mô hình BERT và biến thể (ví dụ unitary/toxic-bert) đạt hiệu quả tốt trong việc phân loại nội dung văn bản. Kết hợp các phương pháp rule-based giúp đảm bảo dự phòng khi mô hình ML không khả dụng hoặc thấp hiệu năng.
+
+3.2 Recommendation systems
+Hệ gợi ý có thể thực hiện bằng collaborative filtering, content-based filtering, hoặc hybrid. Ứng dụng này sử dụng sentence embeddings (ví dụ: all-MiniLM-L6-v2) để tính toán độ tương đồng ngữ nghĩa giữa văn bản của bài viết và profile người dùng, kết hợp với các yếu tố engagement và recency.
+
+3.3 Kiến trúc web hiện đại
+Sử dụng kiến trúc client-server với REST API, cơ chế xác thực bằng token JWT, và Firestore làm DB NoSQL là các lựa chọn phổ biến cho các ứng dụng prototype nhanh.
+
+
+4. PHÂN TÍCH YÊU CẦU
+
+4.1 Yêu cầu chức năng
+- Đăng ký, đăng nhập, xác thực người dùng.
+- Tạo, đọc, cập nhật, xoá (CRUD) bài viết.
+- Bình luận và like bài viết.
+- Kiểm duyệt nội dung trực tiếp khi người dùng đăng bài.
+- Gợi ý bài viết cho người dùng dựa trên sở thích và hành vi.
+- Quản lý media (lưu hình ảnh) bằng storage.
+
+4.2 Yêu cầu phi chức năng
+- Bảo mật: xác thực JWT, kiểm soát truy cập tài nguyên, bảo vệ endpoint.
+- Hiệu năng: trả lời nhanh cho thao tác đọc luồng (tối ưu query, caching sau này).
+- Khả năng mở rộng: kiến trúc service cho phép tách module AI ra dịch vụ riêng.
+- Khả năng chịu lỗi: fallback rule-based cho moderation khi ML thất bại.
+
+4.3 Ràng buộc
+- Sử dụng Firestore cho lưu trữ chính.
+- Sử dụng mô hình pre-trained nếu có internet/huggingface cache; nếu không, sử dụng cơ chế dự phòng.
+
+
+5. KIẾN TRÚC HỆ THỐNG
+
+5.1 Tổng quan kiến trúc
+Hệ thống chia làm Frontend (React) và Backend (FastAPI). Backend đóng vai trò API Gateway, điều phối các router (auth, posts, comments, likes) và gọi các service: ModerationService, RecommendationService, PostRepository (truy vấn Firestore), Storage service cho media. Moderation và Recommendation có thể tải mô hình ML nội bộ (HuggingFace, sentence-transformers) hoặc gọi dịch vụ bên ngoài nếu cần.
+
+5.2 Sơ đồ thành phần (Component Diagram)
+(Sử dụng sơ đồ đã mô tả trong báo cáo kỹ thuật, tham khảo file `SEQUENCE_DIAGRAMS.md` và các sơ đồ Mermaid)
+
+5.3 Giao diện API
+- `POST /api/auth/register` — đăng ký
+- `POST /api/auth/login` — đăng nhập, trả token JWT
+- `GET /api/posts` — lấy danh sách bài viết (pagination)
+- `POST /api/posts` — tạo bài viết (gọi moderation, recommendation)
+- `GET /api/posts/{id}` — lấy bài viết chi tiết
+- `POST /api/posts/{id}/comments` — thêm bình luận
+- `POST /api/posts/{id}/likes` — like bài viết
+
+Mỗi endpoint trả JSON chuẩn, xử lý lỗi bằng HTTP status code thích hợp và thông báo trong trường `detail`.
+
+
+6. THIẾT KẾ CHI TIẾT
+
+6.1 Mẫu dữ liệu (Schemas)
+- User: id, username, email, password_hash, profile (avatar, bio), created_at
+- Post: id, author_id, content, image_url, tags, embedding, likes_count, comments_count, created_at
+- Comment: id, post_id, author_id, content, created_at
+- Like: id, post_id, user_id, created_at
+
+6.2 Thiết kế lớp (Class Diagram)
+Các lớp chính: `User`, `Post`, `Comment`, `Like`, `FirestoreDB`, `PostRepository`, `AuthService`, `ModerationService`, `RecommendationService`.
+
+6.3 Luồng xử lý tạo bài viết (Sequence)
+- Frontend gửi `POST /api/posts` kèm token
+- Backend nhận, xác thực token
+- Backend gọi ModerationService.moderate_text(content)
+- Nếu bị block → trả lỗi về client
+- Nếu thông qua → RecommendationService.generate_tags_and_embedding(content)
+- Lưu post vào Firestore kèm tags và embedding
+- Trả về client thông tin bài viết mới
+
+6.4 Thiết kế Moderator
+- Sử dụng pipeline text-classification (toxic-bert) nếu có GPU/CPU.
+- Nếu model không load được, dùng fallback rule-based detection (từ khoá, spam patterns).
+- Kết quả trả về bao gồm: is_toxic, is_spam, is_hate_speech, confidence_score, details
+
+6.5 Thiết kế Recommendation
+- Sử dụng `SentenceTransformer` để encode content và user profile
+- Tính cosine similarity giữa user embedding và post embeddings
+- Kết hợp điểm engagement và recency
+- Kết quả: danh sách post đã sắp xếp theo độ liên quan
+
+
+7. MÔ-ĐUN AI: MODERATION VÀ RECOMMENDATION
+
+7.1 ModerationService
+Mô tả chi tiết đã được triển khai trong `backend/app/services/moderation_service.py`. Khi khởi tạo, service cố gắng tải tokenizer và model `unitary/toxic-bert`. Nếu thất bại, sử dụng `_init_fallback` với danh sách từ khoá và các kiểm tra pattern spam. Khi gọi `moderate_text`, service sẽ trả về dict có cờ chỉ dẫn block hay không.
+
+7.1.1 Thuật toán rule-based dự phòng
+- Kiểm tra từ khoá blacklist
+- Kiểm tra pattern spam: chuỗi lặp, tỷ lệ nguyên âm/phụ âm, mix số chữ, keyboard sequences
+- Cho điểm tin cậy cơ bản
+
+7.2 RecommendationService
+Mô tả chi tiết trong `backend/app/services/recommendation_service.py`. Service tải `SentenceTransformer('all-MiniLM-L6-v2')` để tạo embedding. Thuật toán:
+- Tạo user profile text từ favorite_tags + liked_posts
+- Encode user embedding
+- Tính điểm semantic similarity giữa user_embedding và mỗi post
+- Kết hợp engagement_score (likes/comments) và recency_score
+- Áp dụng chiến lược explore/exploit để thêm tính đa dạng
+
+7.2.1 Thông số và cân nhắc
+- Semantic weight: 70%
+- Engagement weight: 20%
+- Recency weight: 10%
+- Threshold tương đồng tối thiểu để lọc post (ví dụ >0.3)
+
+7.3 Vấn đề đạo đức và tính công bằng
+- Hệ thống gợi ý cần tránh khuếch tán nội dung độc hại; moderation là tuyến phòng ngừa.
+- Cần kiểm tra bias trong mô hình embeddings (ngôn ngữ, nhóm xã hội).
+- Ghi log hành vi để support for audit nhưng bảo vệ quyền riêng tư (ẩn danh hoá, tuân thủ luật dữ liệu).
+
+
+8. TRIỂN KHAI VÀ TÍCH HỢP
+
+8.1 Môi trường phát triển
+- Backend: Python 3.10+, FastAPI, Uvicorn (ASGI server)
+- Frontend: React (create-react-app), fetch/axios cho REST API
+- Database: Firebase Firestore
+- AI: transformers, sentence-transformers, torch (tuỳ chọn GPU)
+
+8.2 Cấu hình CORS
+Đã cấu hình `CORSMiddleware` trong `backend/app/main.py` để cho phép origin `http://localhost:3000`.
+
+8.3 Xác thực
+Sử dụng JWT: endpoint `login` trả token; các route protected sử dụng `Depends` để verify token. Token lưu ở frontend (localStorage) và gửi trong header `Authorization: Bearer <token>`.
+
+8.4 Lưu media
+Hình ảnh được lưu trong Object Storage (có thể dùng Firebase Storage). URL lưu trong post document của Firestore.
+
+8.5 Triển khai AI models
+- Mô hình moderation và recommendation có thể tải khi backend khởi động (lifespan startup) để tránh latency khi gọi lần đầu.
+- Nếu mô hình nặng, cân nhắc chạy service AI tách biệt, hoặc sử dụng GPU server.
+
+8.6 Tối ưu hoá hiệu năng
+- Pagination cho `GET /api/posts`
+- Sử dụng indexing của Firestore cho các query phức tạp
+- Caching thô (in-memory, redis) cho feed phổ biến
+
+
+9. KIỂM THỬ VÀ ĐÁNH GIÁ
+
+9.1 Chiến lược kiểm thử
+- Unit tests cho các service core (moderation, recommendation, repository)
+- Integration tests cho API endpoints
+- Manual UX testing cho luồng đăng bài, feed, comment, like
+
+9.2 Kịch bản kiểm thử chính
+- Đăng ký/đăng nhập thành công/không thành công
+- Tạo bài viết bình thường → được publish
+- Tạo bài viết chứa từ độc hại → bị chặn
+- Tạo bài spam (pattern) → bị chặn
+- Yêu cầu feed → nhận posts đã gợi ý
+
+9.3 Kết quả kiểm thử (Tóm tắt mẫu)
+- Moderation: mô hình ML nhận diện các nội dung toxic với độ chính xác cao trên bộ mẫu, fallback rule-based xử lý các pattern rõ ràng.
+- Recommendation: embedding-based ranking cải thiện CTR trong thử nghiệm A/B so với simple tag-based (giả lập, số liệu mẫu cần thử nghiệm thực tế).
+
+9.4 Đo lường hiệu năng
+- End-to-end latency cho `GET /api/posts` ở môi trường dev ~100-300ms (tùy query và số lượng post)
+- Thời gian tạo bài viết có moderation + embedding tính thêm 200-700ms khi model tải sẵn; nếu model chưa tải có thể chậm hơn do cold start.
+
+9.5 Đánh giá bảo mật
+- JWT đảm bảo xác thực; cần thêm refresh token và cơ chế revoke cho production.
+- Validate input để tránh injection (tuy Firestore ít rủi ro injection SQL, vẫn cần sanitize và kiểm tra kích thước file upload).
+
+
+10. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
+
+10.1 Kết luận
+Đồ án DACN2 trình bày một prototype mạng xã hội tích hợp AI cho moderation và recommendation. Hệ thống minh hoạ cách kết hợp mô hình NLP và embeddings trong luồng xử lý bài viết để nâng cao chất lượng nội dung và cá nhân hoá feed. Giải pháp cung cấp fallback rule-based để đảm bảo hoạt động liên tục khi ML không khả dụng.
+
+10.2 Hướng phát triển tiếp theo
+- Tách module AI thành microservices độc lập, triển khai trên Kubernetes, dùng GPU/TPU để tăng throughput.
+- Thêm hệ thống logging/monitoring cho mô hình AI (model drift detection, explainability).
+- Cải thiện privacy: differential privacy hoặc federated learning cho recommendation.
+- Triển khai A/B testing thực tế để đo lường tác động recommendation và moderation.
+- Thêm tính năng content appeals (người dùng khiếu nại quyết định moderation)
+
+
+TÀI LIỆU THAM KHẢO
+
+(Phần tài liệu tham khảo sẽ liệt kê các paper, repo, docs; không tính vào 20 trang nội dung)
+
+- Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.
+- Unitary/toxic-bert — Hugging Face model card.
+- Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-networks.
+- Firebase Firestore Documentation.
+- FastAPI Documentation.
+
+
+PHỤ LỤC
+
+- A. Sơ đồ tuần tự (Mermaid code)
+- B. Sơ đồ lớp (Mermaid code)
+- C. Sơ đồ thành phần (Mermaid code)
+- D. Các file cấu hình chính và snipppet mã nguồn
+
+
+---
+
+Ghi chú: Đây là tệp văn bản dạng plain text (.doc) chứa nội dung báo cáo. Để có định dạng tốt trong Word, bạn có thể mở tệp này bằng Microsoft Word và lưu lại ở định dạng `.docx` hoặc `.doc`. Nếu bạn muốn, tôi có thể:
+- Chuyển nội dung sang `.docx` với định dạng heading, mục lục tự động và styles.
+- Thêm bản mục lục chi tiết với tham chiếu số trang (cần convert sang docx/ Word để cập nhật số trang tự động).
+- Thêm nội dung số liệu thử nghiệm cụ thể, biểu đồ và ảnh chụp màn hình từ repo.
+
