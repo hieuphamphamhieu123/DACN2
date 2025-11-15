@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -20,10 +20,20 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserPreferences(BaseModel):
+    favorite_tags: List[str] = []
+    interests: List[str] = []
+
 class UserResponse(BaseModel):
     id: str
     username: str
     email: str
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    preferences: Optional[Dict] = None
+
+class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None

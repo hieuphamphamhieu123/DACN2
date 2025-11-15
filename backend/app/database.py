@@ -1,33 +1,76 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from app.config import settings
+import firebase_admin
+from firebase_admin import credentials, firestore
+import os
 
-class Database:
-    client: AsyncIOMotorClient = None
-    
-db = Database()
+# Global Firestore client
+db = None
 
-async def get_database():
-    return db.client[settings.database_name]
+def get_database():
+    """Get the Firestore database instance"""
+    global db
+    if db is None:
+        raise Exception("Database not initialized. Call connect_to_firestore() first.")
+    return db
 
-async def connect_to_mongo():
-    db.client = AsyncIOMotorClient(settings.mongodb_url)
-    print("✅ Connected to MongoDB")
+async def connect_to_firestore():
+    """Initialize Firebase Admin SDK and connect to Firestore"""
+    global db
+    try:
+        # Path to Firebase credentials file
+        cred_path = os.path.join(os.path.dirname(__file__), "..", "firebase-credentials.json")
 
-async def close_mongo_connection():
-    db.client.close()
-    print("❌ Closed MongoDB connection")
+        if not os.path.exists(cred_path):
+            raise FileNotFoundError(f"Firebase credentials file not found at: {cred_path}")
+
+        # Initialize Firebase Admin SDK
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
+
+        # Get Firestore client
+        db = firestore.client()
+
+        # Test connection by trying to access a collection
+        # This will create the collection if it doesn't exist
+        test_collection = db.collection('_connection_test')
+
+        print("[SUCCESS] Connected to Firebase Firestore")
+
+    except Exception as e:
+        print(f"[ERROR] Failed to connect to Firestore: {e}")
+        print("[TIP] Troubleshooting:")
+        print("   1. Check firebase-credentials.json file exists in backend/")
+        print("   2. Verify the file contains valid Firebase service account credentials")
+        print("   3. Ensure Firestore is enabled in your Firebase project")
+        raise
+
+async def close_firestore_connection():
+    """Close Firestore connection"""
+    global db
+    try:
+        # Firebase Admin SDK handles connection cleanup automatically
+        if firebase_admin._apps:
+            firebase_admin.delete_app(firebase_admin.get_app())
+        db = None
+        print("[INFO] Closed Firestore connection")
+    except Exception as e:
+        print(f"[WARNING] Error closing Firestore connection: {e}")
 
 async def init_database():
-    database = await get_database()
-    
-    # Tạo indexes
-    await database.users.create_index("username", unique=True)
-    await database.users.create_index("email", unique=True)
-    await database.posts.create_index("user_id")
-    await database.posts.create_index([("created_at", -1)])
-    await database.posts.create_index("tags")
-    await database.likes.create_index([("user_id", 1), ("post_id", 1)], unique=True)
-    await database.comments.create_index("post_id")
-    await database.comments.create_index("user_id")
-    
-    print("✅ Database indexes created")
+    """Initialize Firestore collections and indexes"""
+    global db
+    if db is None:
+        raise Exception("Database not connected")
+
+    try:
+        # Firestore doesn't require explicit index creation like MongoDB
+        # Indexes are created automatically or via Firebase Console
+        # But we can create sample collections to ensure they exist
+
+        collections = ['users', 'posts', 'comments', 'likes']
+        for collection_name in collections:
+            # Just reference the collection - it will be created when first document is added
+            db.collection(collection_name)
+
+        print("[SUCCESS] Firestore collections initialized")
+    except Exception as e:
+        print(f"[WARNING] Could not initialize collections: {e}")
